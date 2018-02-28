@@ -5,6 +5,7 @@
  * February 2018
  */
 
+
 //// VARIABLES ////
 
 var mute = false;
@@ -13,6 +14,16 @@ var FPS = 20;
 var STAGE_WIDTH, STAGE_HEIGHT;
 
 var gameStarted = false;
+
+var totalRolls = 0;
+var totalRollsText;
+
+var chartContainer;
+
+var chartData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+var currentDie1 = null;
+var currentDie2 = null;
 
 
 // Chrome 1+
@@ -49,16 +60,116 @@ function endGame() {
 function initGraphics() {
 
   initMuteUnMuteButtons();
-	initListeners();
 
+  rollButton.x = 465;
+  rollButton.y = 520;
+  stage.addChild(rollButton);
+
+  totalRollsText = new createjs.Text(totalRolls, "34px Lato", "black");
+  updateTotalRolls();
+  stage.addChild(totalRollsText);
+
+  initChart();
+
+  for (var die of dice) {
+    die.x = 1
+  }
+
+  initListeners();
 
   // start the game
 	gameStarted = true;
 	stage.update();
 }
 
-function initListeners() {
+function roll() {
+  totalRolls++;
+  updateTotalRolls();
 
+  var die1 =  Math.floor(Math.random() * ((6 - 1) + 1) + 1);
+  var die2 =  Math.floor(Math.random() * ((6 - 1) + 1) + 1);
+
+  stage.removeChild(currentDie1);
+  currentDie1 = Object.create(dice[die1 - 1]);
+  currentDie1.x = 50;
+  currentDie1.y = 400;
+  stage.addChild(currentDie1);
+
+  stage.removeChild(currentDie2);
+  currentDie2 = Object.create(dice[die2 - 1]);
+  currentDie2.x = 200;
+  currentDie2.y = 400;
+  stage.addChild(currentDie2);
+
+  var random = die1 + die2;
+  console.log(random);
+  chartData[random - 2]++;
+  stage.removeChild(chartContainer);
+  initChart();
+}
+
+
+function initChart() {
+  chartContainer = new createjs.Container();
+  stage.addChild(chartContainer);
+
+  // calculate chart scale
+  var max = chartData[0];
+  for (var i = 1; i < chartData.length; i++) {
+      if (chartData[i] > max) {
+        max = chartData[i];
+      }
+  }
+  var chartScale = 240 / max;
+
+  // dimensions
+  var barWidth = 40;
+  var barSpace = 45;
+
+  var chartWidth = 0;
+
+  for (var i = 0; i < chartData.length; i++) {
+    let height = chartData[i];
+    let bar = new createjs.Shape();
+
+    bar.graphics.beginStroke("red").beginFill("blue").drawRect(barSpace * i, 0, barWidth, -height * chartScale);
+    chartContainer.addChild(bar);
+
+    chartWidth += barSpace;
+  }
+
+  chartContainer.y = 335;
+  chartContainer.x = STAGE_WIDTH/2 - chartWidth/2;
+}
+
+/*
+ * Adds the mute and unmute buttons to the stage and defines listeners
+ */
+function initMuteUnMuteButtons() {
+	var hitArea = new createjs.Shape();
+	hitArea.graphics.beginFill("#000").drawRect(0, 0, muteButton.image.width, muteButton.image.height);
+	muteButton.hitArea = unmuteButton.hitArea = hitArea;
+
+	muteButton.x = unmuteButton.x = 5;
+	muteButton.y = unmuteButton.y = 5;
+
+	muteButton.cursor = "pointer";
+	unmuteButton.cursor = "pointer";
+
+	muteButton.on("click", toggleMute);
+	unmuteButton.on("click", toggleMute);
+
+	stage.addChild(unmuteButton);
+}
+
+function initListeners() {
+  rollButton.on("click", roll);
+}
+
+function updateTotalRolls() {
+  totalRollsText.text = totalRolls;
+  totalRollsText.x = 480 - totalRollsText.getMeasuredWidth()/2;
+  totalRollsText.y = 480 - totalRollsText.getMeasuredHeight()/2;
 }
 
 
@@ -68,6 +179,9 @@ function initListeners() {
 
 // bitmap variables
 var muteButton, unmuteButton;
+var background;
+var dice = [];
+var rollButton;
 
 function setupManifest() {
  	manifest = [
@@ -82,6 +196,42 @@ function setupManifest() {
     {
       src: "images/unmute.png",
       id: "unmute"
+    },
+    {
+      src: "images/background.png",
+      id: "background"
+    },
+    {
+      src: "images/roll_btn.png",
+      id: "rollButton"
+    },
+    {
+      src: "images/dice/one.png",
+      id: "dice1"
+    },
+    {
+      src: "images/dice/two.png",
+      id: "dice2"
+    },
+    {
+      src: "images/dice/three.png",
+      id: "dice3"
+    },
+    {
+      src: "images/dice/four.png",
+      id: "dice4"
+    },
+    {
+      src: "images/dice/five.png",
+      id: "dice5"
+    },
+    {
+      src: "images/dice/six.png",
+      id: "dice6"
+    },
+    {
+      src: "images/roll_btn.png",
+      id: "rollButton"
     }
  	];
 }
@@ -104,6 +254,12 @@ function handleFileLoad(event) {
     muteButton = new createjs.Bitmap(event.result);
   } else if (event.item.id == "unmute") {
     unmuteButton = new createjs.Bitmap(event.result);
+  } else if (event.item.id.includes("dice")) {
+    dice.push(new createjs.Bitmap(event.result));
+  } else if (event.item.id == "background") {
+    background = new createjs.Bitmap(event.result);
+  } else if (event.item.id == "rollButton") {
+    rollButton = new createjs.Bitmap(event.result);
   }
 }
 
@@ -126,6 +282,7 @@ function loadComplete(event) {
 	createjs.Ticker.setFPS(FPS);
 	createjs.Ticker.addEventListener("tick", update); // call update function
 
+  stage.addChild(background);
   stage.update();
   initGraphics();
 }
