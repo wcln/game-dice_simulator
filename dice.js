@@ -71,15 +71,27 @@ function initGraphics() {
 
   initChart();
 
-  for (var die of dice) {
-    die.x = 1
-  }
+  updateDice(dice[0], dice[0]);
 
   initListeners();
 
   // start the game
 	gameStarted = true;
 	stage.update();
+}
+
+function updateDice(die1, die2) {
+  stage.removeChild(currentDie1);
+  currentDie1 = Object.create(die1);
+  currentDie1.x = 50;
+  currentDie1.y = 400;
+  stage.addChild(currentDie1);
+
+  stage.removeChild(currentDie2);
+  currentDie2 = Object.create(die2);
+  currentDie2.x = 200;
+  currentDie2.y = 400;
+  stage.addChild(currentDie2);
 }
 
 function roll() {
@@ -89,20 +101,9 @@ function roll() {
   var die1 =  Math.floor(Math.random() * ((6 - 1) + 1) + 1);
   var die2 =  Math.floor(Math.random() * ((6 - 1) + 1) + 1);
 
-  stage.removeChild(currentDie1);
-  currentDie1 = Object.create(dice[die1 - 1]);
-  currentDie1.x = 50;
-  currentDie1.y = 400;
-  stage.addChild(currentDie1);
-
-  stage.removeChild(currentDie2);
-  currentDie2 = Object.create(dice[die2 - 1]);
-  currentDie2.x = 200;
-  currentDie2.y = 400;
-  stage.addChild(currentDie2);
+  updateDice(dice[die1 - 1], dice[die2 - 1]);
 
   var random = die1 + die2;
-  console.log(random);
   chartData[random - 2]++;
   stage.removeChild(chartContainer);
   initChart();
@@ -126,16 +127,22 @@ function initChart() {
   var barWidth = 40;
   var barSpace = 45;
 
-  var chartWidth = 0;
+  var chartWidth = barSpace * chartData.length;
 
   for (var i = 0; i < chartData.length; i++) {
     let height = chartData[i];
-    let bar = new createjs.Shape();
 
-    bar.graphics.beginStroke("red").beginFill("blue").drawRect(barSpace * i, 0, barWidth, -height * chartScale);
-    chartContainer.addChild(bar);
+    if (height > 0) {
+      let bar = new createjs.Shape();
 
-    chartWidth += barSpace;
+      // draw the bar
+      bar.graphics
+        .setStrokeStyle(2)
+        .beginStroke("black")
+        .beginLinearGradientFill(["#000","#FFF"], [0, 1], 0, -height * chartScale, 0, 0)
+        .drawRect(barSpace * i, 0, barWidth, -height * chartScale)
+      chartContainer.addChild(bar);
+    }
   }
 
   chartContainer.y = 335;
