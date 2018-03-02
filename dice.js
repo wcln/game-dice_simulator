@@ -61,11 +61,17 @@ function initGraphics() {
 
   initMuteUnMuteButtons();
 
-  rollButton.x = 465;
-  rollButton.y = 520;
+  rollButton.x = rollButtonPressed.x = 450;
+  rollButton.y = rollButtonPressed.y = 455;
+  rollButtonPressed.cursor = "pointer";
   stage.addChild(rollButton);
 
-  totalRollsText = new createjs.Text(totalRolls, "34px Lato", "black");
+  resetButton.x = resetButtonPressed.x = 450;
+  resetButton.y = resetButtonPressed.y = 535;
+  resetButton.cursor = "pointer";
+  stage.addChild(resetButton);
+
+  totalRollsText = new createjs.Text("Total Rolls: " + totalRolls, "bold 31px Arial", "black");
   updateTotalRolls();
   stage.addChild(totalRollsText);
 
@@ -78,6 +84,18 @@ function initGraphics() {
   // start the game
 	gameStarted = true;
 	stage.update();
+}
+
+function reset() {
+  playSound("click");
+  for (var i = 0; i < chartData.length; i++) {
+    chartData[i] = 0;
+  }
+  totalRolls = 0;
+
+  updateTotalRolls();
+  stage.removeChild(chartContainer);
+  initChart();
 }
 
 function updateDice(die1, die2) {
@@ -97,6 +115,8 @@ function updateDice(die1, die2) {
 function roll() {
   totalRolls++;
   updateTotalRolls();
+
+  playSound("roll");
 
   var die1 =  Math.floor(Math.random() * ((6 - 1) + 1) + 1);
   var die2 =  Math.floor(Math.random() * ((6 - 1) + 1) + 1);
@@ -132,6 +152,12 @@ function initChart() {
   for (var i = 0; i < chartData.length; i++) {
     let height = chartData[i];
 
+    // x-axis
+    var xAxis = new createjs.Text(i + 2, "bold 26px Arial", "black");
+    xAxis.x = barSpace * i + barWidth/2 - xAxis.getMeasuredWidth()/2;
+    xAxis.y = xAxis.getMeasuredHeight() - 10;
+    chartContainer.addChild(xAxis);
+
     if (height > 0) {
       let bar = new createjs.Shape();
 
@@ -139,9 +165,20 @@ function initChart() {
       bar.graphics
         .setStrokeStyle(2)
         .beginStroke("black")
-        .beginLinearGradientFill(["#000","#FFF"], [0, 1], 0, -height * chartScale, 0, 0)
-        .drawRect(barSpace * i, 0, barWidth, -height * chartScale)
+        .beginLinearGradientFill(["#0d5ee0", "#073f99"], [0, 1], 0, -height * chartScale, 0, 0)
+        .drawRoundRectComplex(barSpace * i, -height * chartScale, barWidth, height * chartScale, 5, 5, 0, 0)
       chartContainer.addChild(bar);
+
+      // text
+      var label = new createjs.Text(chartData[i], "14px Arial", "black");
+      label.x = barSpace * i + barWidth/2 - label.getMeasuredWidth()/2;
+      label.y = -height * chartScale + 10;
+
+      if (label.getMeasuredHeight() + 12 > height * chartScale) {
+        label.y = -height * chartScale - 5 - label.getMeasuredHeight();
+      }
+
+      chartContainer.addChild(label);
     }
   }
 
@@ -170,13 +207,32 @@ function initMuteUnMuteButtons() {
 }
 
 function initListeners() {
-  rollButton.on("click", roll);
+  rollButton.on("mouseover", function() {
+    stage.addChild(rollButtonPressed);
+    stage.removeChild(rollButton);
+  });
+  rollButtonPressed.on("mouseout", function() {
+    stage.addChild(rollButton);
+    stage.removeChild(rollButtonPressed);
+  });
+  rollButtonPressed.on("click", roll);
+
+  resetButton.on("mouseover", function() {
+    stage.addChild(resetButtonPressed);
+    stage.removeChild(resetButton);
+  });
+  resetButtonPressed.on("mouseout", function() {
+    stage.addChild(resetButton);
+    stage.removeChild(resetButtonPressed);
+  });
+
+  resetButtonPressed.on("click", reset);
 }
 
 function updateTotalRolls() {
-  totalRollsText.text = totalRolls;
-  totalRollsText.x = 480 - totalRollsText.getMeasuredWidth()/2;
-  totalRollsText.y = 480 - totalRollsText.getMeasuredHeight()/2;
+  totalRollsText.text = "Total Rolls: " + totalRolls;
+  totalRollsText.x = 595 - totalRollsText.getMeasuredWidth();
+  totalRollsText.y = 425 - totalRollsText.getMeasuredHeight()/2;
 }
 
 
@@ -188,13 +244,18 @@ function updateTotalRolls() {
 var muteButton, unmuteButton;
 var background;
 var dice = [];
-var rollButton;
+var rollButton, rollButtonPressed;
+var resetButton, resetButtonPressed;
 
 function setupManifest() {
  	manifest = [
     {
       src: "sounds/click.mp3",
       id: "click"
+    },
+    {
+      src: "sounds/dice.mp3",
+      id: "roll"
     },
     {
       src: "images/mute.png",
@@ -211,6 +272,18 @@ function setupManifest() {
     {
       src: "images/roll_btn.png",
       id: "rollButton"
+    },
+    {
+      src: "images/roll_btn_pressed.png",
+      id: "rollButtonPressed"
+    },
+    {
+      src: "images/reset_btn.png",
+      id: "resetButton"
+    },
+    {
+      src: "images/reset_btn_pressed.png",
+      id: "resetButtonPressed"
     },
     {
       src: "images/dice/one.png",
@@ -267,6 +340,12 @@ function handleFileLoad(event) {
     background = new createjs.Bitmap(event.result);
   } else if (event.item.id == "rollButton") {
     rollButton = new createjs.Bitmap(event.result);
+  } else if (event.item.id == "rollButtonPressed") {
+    rollButtonPressed = new createjs.Bitmap(event.result);
+  } else if (event.item.id == "resetButton") {
+    resetButton = new createjs.Bitmap(event.result);
+  } else if (event.item.id == "resetButtonPressed") {
+    resetButtonPressed = new createjs.Bitmap(event.result);
   }
 }
 
