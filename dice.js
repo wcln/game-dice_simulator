@@ -152,11 +152,17 @@ function initChart() {
   for (var i = 0; i < chartData.length; i++) {
     let height = chartData[i];
 
-    // x-axis
-    var xAxis = new createjs.Text(i + 2, "bold 26px Arial", "black");
+    // sum of dice
+    var xAxis = new createjs.Text(i + 2, "26px Arial", "black");
     xAxis.x = barSpace * i + barWidth/2 - xAxis.getMeasuredWidth()/2;
-    xAxis.y = xAxis.getMeasuredHeight() - 10;
+    xAxis.y = xAxis.getMeasuredHeight() + 30;
     chartContainer.addChild(xAxis);
+
+    // frequency of sums
+    var label = new createjs.Text(chartData[i], "26px Arial", "black");
+    label.x = barSpace * i + barWidth/2 - label.getMeasuredWidth()/2;
+    label.y = label.getMeasuredHeight() - 12;
+    chartContainer.addChild(label);
 
     if (height > 0) {
       let bar = new createjs.Shape();
@@ -169,21 +175,12 @@ function initChart() {
         .drawRoundRectComplex(barSpace * i, -height * chartScale, barWidth, height * chartScale, 5, 5, 0, 0)
       chartContainer.addChild(bar);
 
-      // text
-      var label = new createjs.Text(chartData[i], "14px Arial", "black");
-      label.x = barSpace * i + barWidth/2 - label.getMeasuredWidth()/2;
-      label.y = -height * chartScale + 10;
-
-      if (label.getMeasuredHeight() + 12 > height * chartScale) {
-        label.y = -height * chartScale - 5 - label.getMeasuredHeight();
-      }
-
-      chartContainer.addChild(label);
     }
   }
 
-  chartContainer.y = 335;
-  chartContainer.x = STAGE_WIDTH/2 - chartWidth/2;
+  chartContainer.scaleX = chartContainer.scaleY = 0.85;
+  chartContainer.y = 300;
+  chartContainer.x = STAGE_WIDTH/2 - 135;
 }
 
 /*
