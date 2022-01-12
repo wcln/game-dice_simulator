@@ -1,2 +1,2 @@
-# bcln-game-dice_simulator
-BCLN HTML5 Educational Game
+# Dice Simulator
+https://wcln.ca/local/lor/index.php/resources/view/63
